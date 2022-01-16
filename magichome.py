@@ -81,31 +81,28 @@ class MagicHomeApi:
                 message = [0x31, 0x00, 0x00, 0x00,
                            self.check_number_range(white1),
                            0x0f, 0x0f]
-                self.send_bytes(*(message+[self.calculate_checksum(message)]))
             else:
                 message = [0x31,
                            self.check_number_range(r),
                            self.check_number_range(g),
                            self.check_number_range(b),
                            0x00, 0xf0, 0x0f]
-                self.send_bytes(*(message+[self.calculate_checksum(message)]))
-
+            self.send_bytes(*(message+[self.calculate_checksum(message)]))
         elif self.device_type == 4:
             # Update the white, or color, of a legacy bulb
-            if white1 != None:
-                message = [0x56, 0x00, 0x00, 0x00,
-                           self.check_number_range(white1),
-                           0x0f, 0xaa, 0x56, 0x00, 0x00, 0x00,
-                           self.check_number_range(white1),
-                           0x0f, 0xaa]
-                self.send_bytes(*(message+[self.calculate_checksum(message)]))
-            else:
+            if white1 is None:
                 message = [0x56,
                            self.check_number_range(r),
                            self.check_number_range(g),
                            self.check_number_range(b),
                            0x00, 0xf0, 0xaa]
-                self.send_bytes(*(message+[self.calculate_checksum(message)]))
+            else:
+                message = [0x56, 0x00, 0x00, 0x00,
+                           self.check_number_range(white1),
+                           0x0f, 0xaa, 0x56, 0x00, 0x00, 0x00,
+                           self.check_number_range(white1),
+                           0x0f, 0xaa]
+            self.send_bytes(*(message+[self.calculate_checksum(message)]))
         else:
             # Incompatible device received
             print("Incompatible device type received...")
@@ -122,15 +119,10 @@ class MagicHomeApi:
     def send_preset_function(self, preset_number, speed):
         """Send a preset command to a device."""
         # Presets can range from 0x25 (int 37) to 0x38 (int 56)
-        if preset_number < 37:
-            preset_number = 37
-        if preset_number > 56:
-            preset_number = 56
-        if speed < 0:
-            speed = 0
-        if speed > 100:
-            speed = 100
-
+        preset_number = max(preset_number, 37)
+        preset_number = min(preset_number, 56)
+        speed = max(speed, 0)
+        speed = min(speed, 100)
         if type == 4:
             self.send_bytes(0xBB, preset_number, speed, 0x44)
         else:
